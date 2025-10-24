@@ -40,46 +40,15 @@ const Savings = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  // Mock savings goals
-  const savingsGoals: SavingsGoal[] = [
-    {
-      id: 1,
-      name: "Emergency Fund",
-      targetAmount: 10000,
-      currentAmount: 6500,
-      targetDate: "2025-06-30",
-      priority: "high",
-      description: "6 months of expenses"
-    },
-    {
-      id: 2,
-      name: "Vacation to Europe",
-      targetAmount: 5000,
-      currentAmount: 2000,
-      targetDate: "2025-08-15",
-      priority: "medium",
-      description: "Summer vacation"
-    },
-    {
-      id: 3,
-      name: "New Car Down Payment",
-      targetAmount: 20000,
-      currentAmount: 5000,
-      targetDate: "2026-01-01",
-      priority: "high",
-      description: "20% down payment"
-    },
-    {
-      id: 4,
-      name: "Home Renovation",
-      targetAmount: 15000,
-      currentAmount: 3500,
-      targetDate: "2025-12-31",
-      priority: "medium",
-      description: "Kitchen remodel"
-    },
-  ];
+  const [savingsGoals, setSavingsGoals] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    name: "",
+    target_amount: "",
+    current_amount: "0",
+    target_date: "",
+    priority: "medium",
+    description: "",
+  });
 
   useEffect(() => {
     checkAuth();
@@ -92,6 +61,8 @@ const Savings = () => {
         navigate("/auth");
         return;
       }
+      
+      await fetchGoals();
     } catch (error: any) {
       toast.error("Failed to load savings goals");
     } finally {
@@ -99,10 +70,63 @@ const Savings = () => {
     }
   };
 
-  const calculateMonthlyContribution = (goal: SavingsGoal) => {
-    const remaining = goal.targetAmount - goal.currentAmount;
+  const fetchGoals = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase
+        .from("savings_goals")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("target_date", { ascending: true });
+
+      if (error) throw error;
+      setSavingsGoals(data || []);
+    } catch (error: any) {
+      console.error("Error fetching goals:", error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { error } = await supabase.from("savings_goals").insert({
+        user_id: session.user.id,
+        name: formData.name,
+        target_amount: parseFloat(formData.target_amount),
+        current_amount: parseFloat(formData.current_amount),
+        target_date: formData.target_date,
+        priority: formData.priority as "low" | "medium" | "high",
+        description: formData.description,
+      } as any);
+
+      if (error) throw error;
+
+      toast.success("Savings goal created successfully!");
+      setDialogOpen(false);
+      setFormData({
+        name: "",
+        target_amount: "",
+        current_amount: "0",
+        target_date: "",
+        priority: "medium",
+        description: "",
+      });
+      fetchGoals();
+    } catch (error: any) {
+      toast.error("Failed to create savings goal");
+    }
+  };
+
+  const calculateMonthlyContribution = (goal: any) => {
+    const remaining = goal.target_amount - goal.current_amount;
     const today = new Date();
-    const target = new Date(goal.targetDate);
+    const target = new Date(goal.target_date);
     const monthsRemaining = Math.max(1, Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30)));
     return (remaining / monthsRemaining).toFixed(2);
   };
@@ -156,30 +180,58 @@ const Savings = () => {
                   Set a new financial target to work towards.
                 </DialogDescription>
               </DialogHeader>
-              <form className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="goal-name">Goal Name</Label>
-                  <Input id="goal-name" placeholder="e.g., Emergency Fund" />
+                  <Input 
+                    id="goal-name" 
+                    placeholder="e.g., Emergency Fund" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="target-amount">Target Amount</Label>
-                  <Input id="target-amount" type="number" step="0.01" placeholder="0.00" />
+                  <Input 
+                    id="target-amount" 
+                    type="number" 
+                    step="0.01" 
+                    placeholder="0.00" 
+                    value={formData.target_amount}
+                    onChange={(e) => setFormData({ ...formData, target_amount: e.target.value })}
+                    required
+                  />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="current-amount">Current Amount</Label>
-                  <Input id="current-amount" type="number" step="0.01" placeholder="0.00" defaultValue="0" />
+                  <Input 
+                    id="current-amount" 
+                    type="number" 
+                    step="0.01" 
+                    placeholder="0.00" 
+                    value={formData.current_amount}
+                    onChange={(e) => setFormData({ ...formData, current_amount: e.target.value })}
+                    required
+                  />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="target-date">Target Date</Label>
-                  <Input id="target-date" type="date" />
+                  <Input 
+                    id="target-date" 
+                    type="date" 
+                    value={formData.target_date}
+                    onChange={(e) => setFormData({ ...formData, target_date: e.target.value })}
+                    required
+                  />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="priority">Priority</Label>
-                  <Select>
+                  <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
@@ -193,7 +245,12 @@ const Savings = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="description">Description (Optional)</Label>
-                  <Input id="description" placeholder="Brief description" />
+                  <Input 
+                    id="description" 
+                    placeholder="Brief description" 
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  />
                 </div>
                 
                 <Button type="submit" className="w-full">
@@ -238,11 +295,19 @@ const Savings = () => {
 
         {/* Goals Grid */}
         <div className="grid md:grid-cols-2 gap-6">
-          {savingsGoals.map((goal) => {
-            const percentage = (goal.currentAmount / goal.targetAmount) * 100;
-            const remaining = goal.targetAmount - goal.currentAmount;
-            const monthlyNeeded = calculateMonthlyContribution(goal);
-            const daysLeft = getDaysRemaining(goal.targetDate);
+          {savingsGoals.length === 0 ? (
+            <Card className="shadow-card col-span-2">
+              <CardContent className="text-center py-12">
+                <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No savings goals yet. Create your first goal to get started!</p>
+              </CardContent>
+            </Card>
+          ) : (
+            savingsGoals.map((goal) => {
+              const percentage = (goal.current_amount / goal.target_amount) * 100;
+              const remaining = goal.target_amount - goal.current_amount;
+              const monthlyNeeded = calculateMonthlyContribution(goal);
+              const daysLeft = getDaysRemaining(goal.target_date);
             
             return (
               <Card key={goal.id} className="shadow-card hover:shadow-md transition-shadow">
@@ -261,21 +326,21 @@ const Savings = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-semibold">{Math.round(percentage)}%</span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Progress</span>
+                        <span className="font-semibold">{Math.round(percentage)}%</span>
+                      </div>
+                      <Progress value={percentage} className="h-3" />
+                      <div className="flex justify-between text-sm">
+                        <span className="text-success font-semibold">
+                          ${goal.current_amount.toLocaleString()}
+                        </span>
+                        <span className="text-muted-foreground">
+                          / ${goal.target_amount.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
-                    <Progress value={percentage} className="h-3" />
-                    <div className="flex justify-between text-sm">
-                      <span className="text-success font-semibold">
-                        ${goal.currentAmount.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground">
-                        / ${goal.targetAmount.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
 
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                     <div>
@@ -294,26 +359,27 @@ const Savings = () => {
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Remaining: <span className="font-semibold text-foreground">${remaining.toLocaleString()}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Target Date: {new Date(goal.targetDate).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
-                    </p>
-                  </div>
+                    <div className="pt-4 border-t">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Remaining: <span className="font-semibold text-foreground">${remaining.toLocaleString()}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Target Date: {new Date(goal.target_date).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </p>
+                    </div>
 
-                  <Button variant="outline" className="w-full">
-                    Add Contribution
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
+                    <Button variant="outline" className="w-full">
+                      Add Contribution
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
       </main>
     </div>
