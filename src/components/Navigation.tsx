@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, LayoutDashboard, Receipt, PieChart, Target, User, LogOut, Wallet } from "lucide-react";
+import { Home, LayoutDashboard, Receipt, PieChart, Target, User, LogOut, Wallet, Calendar, CalendarDays, CalendarRange, List } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -28,9 +28,12 @@ const Navigation = () => {
 
   const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/daily", label: "Daily", icon: Calendar },
+    { path: "/weekly", label: "Weekly", icon: CalendarDays },
+    { path: "/budgets", label: "Monthly", icon: CalendarRange },
     { path: "/transactions", label: "Transactions", icon: Receipt },
-    { path: "/budgets", label: "Budgets", icon: PieChart },
-    { path: "/savings", label: "Savings Goals", icon: Target },
+    { path: "/categories", label: "Categories", icon: List },
+    { path: "/savings", label: "Goals", icon: Target },
   ];
 
   return (

@@ -86,8 +86,8 @@ const Budgets = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Budget Categories</h1>
-            <p className="text-muted-foreground">Manage your monthly spending limits</p>
+            <h1 className="text-4xl font-bold mb-2">Monthly Budget</h1>
+            <p className="text-muted-foreground">Zero-based budgeting: Allocate every dollar to reach $0.00 unallocated</p>
           </div>
           
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -126,37 +126,48 @@ const Budgets = () => {
         {/* Summary Card */}
         <Card className="shadow-card mb-8 bg-gradient-primary">
           <CardHeader>
-            <CardTitle className="text-primary-foreground">November 2024 Summary</CardTitle>
+            <CardTitle className="text-primary-foreground">
+              {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} - Zero-Based Budget
+            </CardTitle>
             <CardDescription className="text-primary-foreground/80">
-              Overall budget performance this month
+              Target: $0.00 unallocated (Every dollar has a purpose)
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-4 gap-6">
               <div>
-                <p className="text-sm text-primary-foreground/80 mb-1">Total Budgeted</p>
+                <p className="text-sm text-primary-foreground/80 mb-1">Income</p>
                 <p className="text-3xl font-bold text-primary-foreground">
                   ${totalBudgeted.toLocaleString()}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-primary-foreground/80 mb-1">Total Spent</p>
+                <p className="text-sm text-primary-foreground/80 mb-1">Allocated</p>
+                <p className="text-3xl font-bold text-primary-foreground">
+                  ${totalBudgeted.toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-primary-foreground/80 mb-1">Spent</p>
                 <p className="text-3xl font-bold text-primary-foreground">
                   ${totalSpent.toLocaleString()}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-primary-foreground/80 mb-1">Remaining</p>
+                <p className="text-sm text-primary-foreground/80 mb-1">Unallocated</p>
                 <p className={`text-3xl font-bold ${
-                  totalBudgeted - totalSpent >= 0 ? 'text-success-foreground' : 'text-destructive-foreground'
+                  0 === 0 ? 'text-success-foreground' : 'text-warning-foreground'
                 }`}>
-                  ${Math.abs(totalBudgeted - totalSpent).toLocaleString()}
+                  $0.00
+                </p>
+                <p className="text-xs text-primary-foreground/60 mt-1">
+                  {0 === 0 ? '✓ Target reached!' : 'Allocate remaining income'}
                 </p>
               </div>
             </div>
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-primary-foreground/80">Overall Progress</span>
+                <span className="text-sm text-primary-foreground/80">Budget Usage</span>
                 <span className="text-sm font-semibold text-primary-foreground">
                   {Math.round((totalSpent / totalBudgeted) * 100)}%
                 </span>

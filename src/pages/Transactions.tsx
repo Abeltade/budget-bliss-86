@@ -42,12 +42,15 @@ const Transactions = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [savingsGoals, setSavingsGoals] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     type: "expense",
     amount: "",
     description: "",
     category_id: "",
     account_id: "",
+    destination_account_id: "",
+    savings_goal_id: "",
     transaction_date: new Date().toISOString().split("T")[0],
   });
 
@@ -73,6 +76,7 @@ const Transactions = () => {
         fetchTransactions(),
         fetchAccounts(),
         fetchCategories(),
+        fetchSavingsGoals(),
       ]);
     } catch (error: any) {
       toast.error("Failed to load data");
@@ -138,12 +142,31 @@ const Transactions = () => {
       const { data, error } = await supabase
         .from("budget_categories")
         .select("*")
-        .eq("user_id", session.user.id);
+        .eq("user_id", session.user.id)
+        .order("type", { ascending: false })
+        .order("name", { ascending: true });
 
       if (error) throw error;
       setCategories(data || []);
     } catch (error: any) {
       console.error("Error fetching categories:", error);
+    }
+  };
+
+  const fetchSavingsGoals = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase
+        .from("savings_goals")
+        .select("*")
+        .eq("user_id", session.user.id);
+
+      if (error) throw error;
+      setSavingsGoals(data || []);
+    } catch (error: any) {
+      console.error("Error fetching savings goals:", error);
     }
   };
 
@@ -154,17 +177,60 @@ const Transactions = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { error } = await supabase.from("transactions").insert({
+      // Insert transaction
+      const transactionData: any = {
         user_id: session.user.id,
-        type: formData.type as "income" | "expense",
+        type: formData.type as "income" | "expense" | "transfer",
         amount: parseFloat(formData.amount),
         description: formData.description,
         category_id: formData.category_id || null,
         account_id: formData.account_id,
         transaction_date: formData.transaction_date,
-      } as any);
+      };
 
-      if (error) throw error;
+      // Add destination account if transfer
+      if (formData.type === "transfer" && formData.destination_account_id) {
+        transactionData.destination_account_id = formData.destination_account_id;
+      }
+
+      const { data: transactionResult, error: transError } = await supabase
+        .from("transactions")
+        .insert(transactionData)
+        .select()
+        .single();
+
+      if (transError) throw transError;
+
+      // If linked to savings goal, create contribution
+      if (formData.savings_goal_id && transactionResult) {
+        const { error: contribError } = await supabase
+          .from("goal_contributions")
+          .insert({
+            user_id: session.user.id,
+            goal_id: formData.savings_goal_id,
+            transaction_id: transactionResult.id,
+            amount: parseFloat(formData.amount),
+            contribution_date: formData.transaction_date,
+            notes: `Contribution via ${formData.description}`,
+          });
+
+        if (contribError) throw contribError;
+
+        // Update goal's current amount
+        const { data: goalData } = await supabase
+          .from("savings_goals")
+          .select("current_amount")
+          .eq("id", formData.savings_goal_id)
+          .single();
+
+        if (goalData) {
+          const newAmount = Number(goalData.current_amount) + parseFloat(formData.amount);
+          await supabase
+            .from("savings_goals")
+            .update({ current_amount: newAmount })
+            .eq("id", formData.savings_goal_id);
+        }
+      }
 
       toast.success("Transaction added successfully!");
       setDialogOpen(false);
@@ -174,11 +240,14 @@ const Transactions = () => {
         description: "",
         category_id: "",
         account_id: "",
+        destination_account_id: "",
+        savings_goal_id: "",
         transaction_date: new Date().toISOString().split("T")[0],
       });
       fetchTransactions();
     } catch (error: any) {
       toast.error("Failed to add transaction");
+      console.error(error);
     }
   };
 
@@ -230,6 +299,7 @@ const Transactions = () => {
                     <SelectContent>
                       <SelectItem value="income">Income</SelectItem>
                       <SelectItem value="expense">Expense</SelectItem>
+                      <SelectItem value="transfer">Transfer</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -259,23 +329,25 @@ const Transactions = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category (Optional)</Label>
+                  <Label htmlFor="category">Category</Label>
                   <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
+                      {categories
+                        .filter(cat => formData.type === 'transfer' || cat.type === formData.type)
+                        .map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.icon} {cat.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="account">Account</Label>
+                  <Label htmlFor="account">{formData.type === 'transfer' ? 'From Account' : 'Account'}</Label>
                   <Select value={formData.account_id} onValueChange={(value) => setFormData({ ...formData, account_id: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select account" />
@@ -284,6 +356,41 @@ const Transactions = () => {
                       {accounts.map((acc) => (
                         <SelectItem key={acc.id} value={acc.id}>
                           {acc.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {formData.type === 'transfer' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="destination">To Account</Label>
+                    <Select value={formData.destination_account_id} onValueChange={(value) => setFormData({ ...formData, destination_account_id: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select destination" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accounts.filter(acc => acc.id !== formData.account_id).map((acc) => (
+                          <SelectItem key={acc.id} value={acc.id}>
+                            {acc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="savings_goal">Link to Savings Goal (Optional)</Label>
+                  <Select value={formData.savings_goal_id} onValueChange={(value) => setFormData({ ...formData, savings_goal_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="None" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {savingsGoals.map((goal) => (
+                        <SelectItem key={goal.id} value={goal.id}>
+                          {goal.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

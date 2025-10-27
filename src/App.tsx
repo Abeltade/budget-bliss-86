@@ -10,6 +10,9 @@ import Transactions from "./pages/Transactions";
 import Budgets from "./pages/Budgets";
 import Savings from "./pages/Savings";
 import Profile from "./pages/Profile";
+import DailyView from "./pages/DailyView";
+import WeeklyView from "./pages/WeeklyView";
+import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +31,9 @@ const App = () => (
           <Route path="/budgets" element={<Budgets />} />
           <Route path="/savings" element={<Savings />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/daily" element={<DailyView />} />
+          <Route path="/weekly" element={<WeeklyView />} />
+          <Route path="/categories" element={<Categories />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
