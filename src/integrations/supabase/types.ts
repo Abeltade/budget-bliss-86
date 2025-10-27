@@ -55,6 +55,7 @@ export type Database = {
           id: string
           name: string
           parent_id: string | null
+          type: string
           updated_at: string
           user_id: string
         }
@@ -65,6 +66,7 @@ export type Database = {
           id?: string
           name: string
           parent_id?: string | null
+          type?: string
           updated_at?: string
           user_id: string
         }
@@ -75,6 +77,7 @@ export type Database = {
           id?: string
           name?: string
           parent_id?: string | null
+          type?: string
           updated_at?: string
           user_id?: string
         }
@@ -168,7 +171,7 @@ export type Database = {
           {
             foreignKeyName: "goal_contributions_transaction_id_fkey"
             columns: ["transaction_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "transactions"
             referencedColumns: ["id"]
           },
@@ -241,6 +244,7 @@ export type Database = {
           category_id: string | null
           created_at: string
           description: string | null
+          destination_account_id: string | null
           id: string
           transaction_date: string
           type: Database["public"]["Enums"]["transaction_type"]
@@ -253,6 +257,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          destination_account_id?: string | null
           id?: string
           transaction_date?: string
           type: Database["public"]["Enums"]["transaction_type"]
@@ -265,6 +270,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          destination_account_id?: string | null
           id?: string
           transaction_date?: string
           type?: Database["public"]["Enums"]["transaction_type"]
@@ -286,11 +292,47 @@ export type Database = {
             referencedRelation: "budget_categories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "transactions_destination_account_id_fkey"
+            columns: ["destination_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      daily_summary: {
+        Row: {
+          daily_expenses: number | null
+          daily_income: number | null
+          daily_net: number | null
+          transaction_date: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      monthly_summary: {
+        Row: {
+          month_start: string | null
+          monthly_expenses: number | null
+          monthly_income: number | null
+          monthly_net: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      weekly_summary: {
+        Row: {
+          user_id: string | null
+          week_start: string | null
+          weekly_expenses: number | null
+          weekly_income: number | null
+          weekly_net: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
