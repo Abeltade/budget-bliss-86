@@ -95,7 +95,7 @@ const Transactions = () => {
         .select(`
           *,
           budget_categories(name),
-          accounts(name)
+          accounts!transactions_account_id_fkey(name)
         `)
         .eq("user_id", session.user.id)
         .order("transaction_date", { ascending: false });
@@ -382,12 +382,12 @@ const Transactions = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="savings_goal">Link to Savings Goal (Optional)</Label>
-                  <Select value={formData.savings_goal_id} onValueChange={(value) => setFormData({ ...formData, savings_goal_id: value })}>
+                  <Select value={formData.savings_goal_id || "none"} onValueChange={(value) => setFormData({ ...formData, savings_goal_id: value === "none" ? "" : value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="None" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {savingsGoals.map((goal) => (
                         <SelectItem key={goal.id} value={goal.id}>
                           {goal.name}

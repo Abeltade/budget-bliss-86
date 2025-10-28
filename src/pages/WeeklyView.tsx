@@ -50,7 +50,7 @@ const WeeklyView = () => {
         .select(`
           *,
           budget_categories(name, type),
-          accounts(name)
+          accounts!transactions_account_id_fkey(name)
         `)
         .eq("user_id", session.user.id)
         .gte("transaction_date", weekStartStr)
