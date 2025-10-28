@@ -173,6 +173,12 @@ const Transactions = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate required fields
+    if (!formData.account_id) {
+      toast.error("Please select an account");
+      return;
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
@@ -347,8 +353,8 @@ const Transactions = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="account">{formData.type === 'transfer' ? 'From Account' : 'Account'}</Label>
-                  <Select value={formData.account_id || undefined} onValueChange={(value) => setFormData({ ...formData, account_id: value })}>
+                  <Label htmlFor="account">{formData.type === 'transfer' ? 'From Account' : 'Account'} *</Label>
+                  <Select value={formData.account_id || undefined} onValueChange={(value) => setFormData({ ...formData, account_id: value })} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Select account" />
                     </SelectTrigger>
