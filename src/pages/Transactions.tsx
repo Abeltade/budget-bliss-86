@@ -47,10 +47,10 @@ const Transactions = () => {
     type: "expense",
     amount: "",
     description: "",
-    category_id: "",
-    account_id: "",
-    destination_account_id: "",
-    savings_goal_id: "",
+    category_id: undefined as string | undefined,
+    account_id: undefined as string | undefined,
+    destination_account_id: undefined as string | undefined,
+    savings_goal_id: undefined as string | undefined,
     transaction_date: new Date().toISOString().split("T")[0],
   });
 
@@ -238,10 +238,10 @@ const Transactions = () => {
         type: "expense",
         amount: "",
         description: "",
-        category_id: "",
-        account_id: "",
-        destination_account_id: "",
-        savings_goal_id: "",
+        category_id: undefined,
+        account_id: undefined,
+        destination_account_id: undefined,
+        savings_goal_id: undefined,
         transaction_date: new Date().toISOString().split("T")[0],
       });
       fetchTransactions();
@@ -330,7 +330,7 @@ const Transactions = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="category">Category</Label>
-                  <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                  <Select value={formData.category_id || undefined} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -348,7 +348,7 @@ const Transactions = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="account">{formData.type === 'transfer' ? 'From Account' : 'Account'}</Label>
-                  <Select value={formData.account_id} onValueChange={(value) => setFormData({ ...formData, account_id: value })}>
+                  <Select value={formData.account_id || undefined} onValueChange={(value) => setFormData({ ...formData, account_id: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select account" />
                     </SelectTrigger>
@@ -365,7 +365,7 @@ const Transactions = () => {
                 {formData.type === 'transfer' && (
                   <div className="space-y-2">
                     <Label htmlFor="destination">To Account</Label>
-                    <Select value={formData.destination_account_id} onValueChange={(value) => setFormData({ ...formData, destination_account_id: value })}>
+                    <Select value={formData.destination_account_id || undefined} onValueChange={(value) => setFormData({ ...formData, destination_account_id: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select destination" />
                       </SelectTrigger>
@@ -382,12 +382,11 @@ const Transactions = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="savings_goal">Link to Savings Goal (Optional)</Label>
-                  <Select value={formData.savings_goal_id || "none"} onValueChange={(value) => setFormData({ ...formData, savings_goal_id: value === "none" ? "" : value })}>
+                  <Select value={formData.savings_goal_id || undefined} onValueChange={(value) => setFormData({ ...formData, savings_goal_id: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="None" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
                       {savingsGoals.map((goal) => (
                         <SelectItem key={goal.id} value={goal.id}>
                           {goal.name}
