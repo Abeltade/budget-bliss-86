@@ -283,7 +283,15 @@ const Transactions = () => {
           
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button 
+                className="gap-2"
+                onClick={(e) => {
+                  if (accounts.length === 0) {
+                    e.preventDefault();
+                    toast.error("Please create an account first before adding transactions");
+                  }
+                }}
+              >
                 <Plus className="h-4 w-4" />
                 Add Transaction
               </Button>
