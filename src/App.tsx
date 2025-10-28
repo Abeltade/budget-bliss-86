@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import DailyView from "./pages/DailyView";
 import WeeklyView from "./pages/WeeklyView";
 import Categories from "./pages/Categories";
+import Accounts from "./pages/Accounts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/budgets" element={<Budgets />} />
           <Route path="/savings" element={<Savings />} />
+          <Route path="/accounts" element={<Accounts />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/daily" element={<DailyView />} />
           <Route path="/weekly" element={<WeeklyView />} />

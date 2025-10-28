@@ -28,6 +28,7 @@ const Navigation = () => {
 
   const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/accounts", label: "Accounts", icon: Wallet },
     { path: "/daily", label: "Daily", icon: Calendar },
     { path: "/weekly", label: "Weekly", icon: CalendarDays },
     { path: "/budgets", label: "Monthly", icon: CalendarRange },
