@@ -14,6 +14,8 @@ interface DashboardStats {
   monthlyIncome: number;
   monthlyExpenses: number;
   savingsProgress: number;
+  budgetedAmount: number;
+  unallocatedFunds: number;
 }
 
 const Dashboard = () => {
@@ -24,6 +26,8 @@ const Dashboard = () => {
     monthlyIncome: 0,
     monthlyExpenses: 0,
     savingsProgress: 0,
+    budgetedAmount: 0,
+    unallocatedFunds: 0,
   });
 
   useEffect(() => {
@@ -49,11 +53,15 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     // For now, using mock data - will be replaced with real queries
+    const monthlyIncome = 5000.00;
+    const budgetedAmount = 4500.00;
     setStats({
       totalBalance: 12450.00,
-      monthlyIncome: 5000.00,
+      monthlyIncome,
       monthlyExpenses: 3250.00,
       savingsProgress: 65,
+      budgetedAmount,
+      unallocatedFunds: monthlyIncome - budgetedAmount,
     });
   };
 
@@ -114,19 +122,41 @@ const Dashboard = () => {
 
           <Card className="shadow-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Net Cash Flow</CardTitle>
-              <TrendingUp className="h-4 w-4 text-warning" />
+              <CardTitle className="text-sm font-medium">Budgeted This Month</CardTitle>
+              <PieChart className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${netCashFlow >= 0 ? 'text-success' : 'text-destructive'}`}>
-                ${Math.abs(netCashFlow).toLocaleString()}
-              </div>
+              <div className="text-2xl font-bold">${stats.budgetedAmount.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                {netCashFlow >= 0 ? 'Surplus' : 'Deficit'}
+                {((stats.budgetedAmount / stats.monthlyIncome) * 100).toFixed(0)}% allocated
               </p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Zero-Based Budget Alert */}
+        {stats.unallocatedFunds > 0 && (
+          <Card className="shadow-card mb-8 border-warning">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <div className="rounded-full bg-warning/10 p-3">
+                  <TrendingUp className="h-6 w-6 text-warning" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">Unallocated Funds: ${stats.unallocatedFunds.toLocaleString()}</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Zero-based budgeting means every dollar has a purpose. Assign these funds to categories to maximize your financial control.
+                  </p>
+                  <Link to="/budgets">
+                    <Button size="sm" variant="outline">
+                      Allocate Funds
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-2 mb-8">
           {/* Quick Actions */}
@@ -200,11 +230,11 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Budget Overview */}
+        {/* Zero-Based Budget Overview */}
         <Card className="shadow-card">
           <CardHeader>
-            <CardTitle>Budget Overview - November 2024</CardTitle>
-            <CardDescription>Track your spending across categories</CardDescription>
+            <CardTitle>Zero-Based Budget - November 2024</CardTitle>
+            <CardDescription>Every dollar assigned a purpose • {((stats.budgetedAmount / stats.monthlyIncome) * 100).toFixed(0)}% of income allocated</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {[

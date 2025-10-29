@@ -24,19 +24,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, ArrowUpIcon, ArrowDownIcon, Search } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const Transactions = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [accounts, setAccounts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -239,7 +239,7 @@ const Transactions = () => {
       }
 
       toast.success("Transaction added successfully!");
-      setDialogOpen(false);
+      setSheetOpen(false);
       setFormData({
         type: "expense",
         amount: "",
@@ -281,8 +281,8 @@ const Transactions = () => {
             <p className="text-muted-foreground">Track all your income and expenses</p>
           </div>
           
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+            <SheetTrigger asChild>
               <Button 
                 className="gap-2"
                 onClick={(e) => {
@@ -295,15 +295,15 @@ const Transactions = () => {
                 <Plus className="h-4 w-4" />
                 Add Transaction
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Transaction</DialogTitle>
-                <DialogDescription>
+            </SheetTrigger>
+            <SheetContent className="overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Add New Transaction</SheetTitle>
+                <SheetDescription>
                   Enter the details of your transaction below.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+                </SheetDescription>
+              </SheetHeader>
+              <form onSubmit={handleSubmit} className="space-y-4 mt-6">
                 <div className="space-y-2">
                   <Label htmlFor="type">Type</Label>
                   <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
@@ -425,8 +425,8 @@ const Transactions = () => {
                   Add Transaction
                 </Button>
               </form>
-            </DialogContent>
-          </Dialog>
+            </SheetContent>
+          </Sheet>
         </div>
 
         <Card className="shadow-card">
